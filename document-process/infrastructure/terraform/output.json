@@ -1,0 +1,1 @@
+{"errorMessage": "'body'", "errorType": "KeyError", "requestId": "b72a9ae8-2aac-4f5c-92d2-051829f65624", "stackTrace": ["  File \"/var/task/index.py\", line 20, in handler\n    body = json.loads(event[\"body\"])\n"]}

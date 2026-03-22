@@ -1,0 +1,1 @@
+Testando o envio de arquivo para o S3 via API Gateway.
