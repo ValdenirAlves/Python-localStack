@@ -123,20 +123,18 @@ Upload a file using the `/upload/` endpoint.
 
 ### Check S3
 
-awslocal s3 ls s3://document-upload-bucket  
+aws --endpoint-url=http://localhost:4566 s3 ls s3://document-upload-bucket  
 
 ---
 
 ### Check DynamoDB
-
-awslocal dynamodb scan --table-name documents  
-
+ 
+aws --endpoint-url=http://localhost:4566 dynamodb scan --table-name documents
 ---
 
 ### Check SQS
 
-awslocal sqs receive-message \
-  --queue-url http://localhost:4566/000000000000/document-processing-queue  
+aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url http://localhost:4566/000000000000/document-processing-queue  
 
 ---
 
