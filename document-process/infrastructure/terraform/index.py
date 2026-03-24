@@ -1,50 +1,61 @@
+from datetime import datetime, timezone
 import json
+import uuid
 import boto3
 import base64
+import traceback
 
 BUCKET = 'document-upload-bucket'
 TABLE = 'documents'
-QUEUE = "http://localhost:4566/000000000000/document-processing-queue"
+QUEUE_URL = "http://localhost.localstack.cloud:4566/000000000000/document-processing-queue"
 
-# clientes apontando para LocalStack
-# Usa localhost.localstack.cloud que é resolvido dentro da Lambda no LocalStack
-s3 = boto3.client("s3", endpoint_url="http://localhost.localstack.cloud:4566")
-dynamodb = boto3.client("dynamodb", endpoint_url="http://localhost.localstack.cloud:4566")
-sqs = boto3.client("sqs", endpoint_url="http://localhost.localstack.cloud:4566")
+ENDPOINT = "http://localhost.localstack.cloud:4566"
+
+s3       = boto3.client("s3",         endpoint_url=ENDPOINT, region_name="us-east-1", aws_access_key_id="test", aws_secret_access_key="test")
+dynamodb = boto3.resource("dynamodb", endpoint_url=ENDPOINT, region_name="us-east-1", aws_access_key_id="test", aws_secret_access_key="test")
+sqs      = boto3.resource("sqs",      endpoint_url=ENDPOINT, region_name="us-east-1", aws_access_key_id="test", aws_secret_access_key="test")
 
 def handler(event, context):
-
     print("EVENT:", event)
 
-    # recebe JSON com filename + content
-    # body = json.loads(event.get("body", "{}"))
     body = json.loads(event["body"])
     file_name = body.get("filename")
-    content = base64.b64decode(body["content"])
+    content_b64 = body.get("content")
 
-    if not file_name or not content:
+    if not file_name or not content_b64:
         return {
             "statusCode": 400,
             "body": json.dumps({"error": "File name and content are required!"})
         }
-    
-    
 
-    # grava no S3
+    content = base64.b64decode(content_b64)
+
+    # Grava no S3
     s3.put_object(Bucket=BUCKET, Key=file_name, Body=content)
 
-    # grava metadados no DynamoDB
-    dynamodb.put_item(
-        TableName=TABLE,
-        Item={
-            "document_id": {"S": file_name},
-            "size": {"N": str(len(content))}
+    # Grava metadados no DynamoDB
+    try:
+        table = dynamodb.Table(TABLE)
+        table.put_item(
+            Item={
+                "document_id": str(uuid.uuid4()),
+                "file_name": file_name,
+                "bucket": BUCKET,
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "size": len(content)
+            }
+        )
+    except Exception as e:
+        print("ERROR:", str(e))
+        print(traceback.format_exc())
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
         }
-    )
 
-    # envia evento para SQS
-    sqs.send_message(
-        QueueUrl=QUEUE,
+    # Envia evento para SQS
+    queue = sqs.Queue(QUEUE_URL)
+    queue.send_message(
         MessageBody=json.dumps({
             "bucket": BUCKET,
             "key": file_name
