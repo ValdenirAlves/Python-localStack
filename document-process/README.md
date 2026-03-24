@@ -138,6 +138,27 @@ aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url http://
 
 ---
 
+### Consume SQS messages
+
+The worker continuously polls the SQS queue for new messages and processes them asynchronously.
+
+**What the worker does:**
+1. Listens to the SQS queue for incoming messages
+2. Receives message containing S3 bucket and file key
+3. Downloads the file from S3 to local storage
+4. Removes the processed message from the queue
+
+**Running the worker:**
+
+```bash
+cd worker
+python worker.py
+```
+
+The worker runs in a continuous loop, checking for new messages every 5 seconds with long polling enabled.
+
+---
+
 ## 💡 Key Learnings
 
 - Building serverless applications using AWS services  
@@ -150,8 +171,7 @@ aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url http://
 ---
 
 ## 🚀 Future Improvements
-
-- Add Lambda worker to process SQS messages  
+ 
 - Implement file validation and error handling  
 - Add authentication (JWT)  
 - Deploy to real AWS environment  
