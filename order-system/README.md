@@ -1,0 +1,3 @@
+Fase 1 — MVP: recebe pedido via API Gateway → Lambda salva no DynamoDB → SQS recebe evento → Lambda notificador → SES envia e-mail de confirmação.
+Fase 2 — Evolução: troca a chamada direta Lambda→SES por SNS no meio, deixando a arquitetura extensível. Agora você pode adicionar um segundo subscriber (ex: SMS ou Slack) sem mudar o código existente.
+Fase 3 — Bônus: adiciona um endpoint GET /pedido/{id} para consultar status, e usa CloudWatch Logs para observabilidade básica.
